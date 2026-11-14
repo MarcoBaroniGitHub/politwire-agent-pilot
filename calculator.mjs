@@ -14,6 +14,9 @@ export function calculate(operation, left, right) {
     case 'mul':
       result = left * right;
       break;
+    case 'pct':
+      result = (left / 100) * right;
+      break;
     case 'div':
       if (right === 0) throw new RangeError('Division par zéro.');
       result = left / right;
