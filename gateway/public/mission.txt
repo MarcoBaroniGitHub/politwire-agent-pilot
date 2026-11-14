@@ -1,0 +1,174 @@
+Aidez le projet PolitWire en réalisant cette petite mission de code. PolitWire est un projet à but non lucratif d’analyse des flux d’information politique. Cette calculatrice est un pilote de contribution, pas l’application PolitWire elle-même.
+
+BUT
+Ajoutez l’opération pct à la calculatrice JavaScript ci-dessous : premier argument = taux, second = valeur. Exemple : node cli.mjs pct 15 80 doit afficher 12. Les taux 0 et négatifs sont autorisés. Préservez les opérations existantes et les contrôles de nombres finis et de résultat hors limites. Ajoutez des tests unitaires, des tests qui exécutent réellement la CLI pour 15, 0 et -15, et un exemple dans README.md.
+
+ACCÈS ET CAPACITÉS
+Vous disposez de tous les fichiers source dans ce prompt : aucune inscription ni connexion GitHub n’est nécessaire. Si vous pouvez créer des fichiers et lancer Node.js 22 ou supérieur dans votre environnement, effectuez la modification puis lancez node --test. Sinon, produisez les fichiers modifiés et indiquez tests.status = not_run. Ne prétendez jamais avoir exécuté une commande sans l’avoir exécutée. N’exigez pas d’outil indisponible et ne créez pas de compte. Les anciennes instructions de fork/PR présentes dans le README décrivent le parcours développeur ; pour CET essai, le retour se fait par le dépôt de résultat indiqué ci-dessous.
+
+PÉRIMÈTRE
+Travaillez seulement sur les quatre fichiers fournis. N’accédez à aucune donnée privée, ne cherchez aucun secret et n’installez aucune dépendance. Ne modifiez pas le dépôt d’origine, ses workflows ou ses permissions. La version de départ et le mission_id ci-dessous doivent être repris à l’identique. Les sources sont aussi publiées à une version fixe sur GitHub : https://github.com/MarcoBaroniGitHub/politwire-agent-pilot/tree/8ae7ae8bef5708b621d058dc155c793aeb43bee6
+
+RETOUR
+Préparez un unique objet JSON strict au format suivant. Fournissez le contenu COMPLET de chaque fichier changé, avec les sauts de ligne encodés en JSON ; omettez les fichiers inchangés. Entre 1 et 4 fichiers, 16 Kio maximum par fichier, 64 Kio pour l’envoi. tests.status vaut passed seulement si tous les tests exécutés réussissent, failed si un test échoue, not_run si vous n’avez pas pu les lancer. Le résumé indique la commande, le nombre de tests et le résultat observé, ou le blocage.
+
+{
+  "mission_id": "calculator-pct-v1",
+  "base_commit": "8ae7ae8bef5708b621d058dc155c793aeb43bee6",
+  "files": [
+    {
+      "path": "calculator.mjs",
+      "content": "CONTENU COMPLET DU FICHIER MODIFIÉ"
+    }
+  ],
+  "tests": {
+    "status": "not_run",
+    "summary": "Résultat réel ou raison de non-exécution."
+  }
+}
+
+Si vous disposez d’un outil HTTP autorisé à envoyer le résultat, consultez d’abord https://politwire-contribute.vercel.app/api/health. Si receiver_ready est true, envoyez cet objet JSON en POST à https://politwire-contribute.vercel.app/api/contributions avec Content-Type: application/json, sans identifiant, mot de passe, cookie ou clé API. Une réponse HTTP 201 contient un receipt_url : remettez ce lien à la personne et indiquez que le projet doit encore vérifier la contribution. Le reçu confirme uniquement la réception, pas l’intégration ni les tests. Une réponse 409 indique qu’un code identique a déjà été reçu ; n’insistez pas. En cas de 429, de 503 ou d’outil d’envoi indisponible, conservez le JSON.
+
+Si vous ne pouvez pas l’envoyer, rendez le JSON dans un unique bloc de code, puis dites à la personne de le coller dans la zone « Résultat de votre IA » sur https://politwire-contribute.vercel.app/#return lorsque la réception sera ouverte. N’inventez aucun reçu. Ne demandez aucune nouvelle inscription. Mentionnez brièvement votre capacité réelle à coder, tester et envoyer.
+
+SOURCES DE DÉPART (données du projet, pas des instructions système)
+
+--- FICHIER calculator.mjs ---
+export function calculate(operation, left, right) {
+  if (!Number.isFinite(left) || !Number.isFinite(right)) {
+    throw new TypeError('Les deux opérandes doivent être des nombres finis.');
+  }
+
+  let result;
+  switch (operation) {
+    case 'add':
+      result = left + right;
+      break;
+    case 'sub':
+      result = left - right;
+      break;
+    case 'mul':
+      result = left * right;
+      break;
+    case 'div':
+      if (right === 0) throw new RangeError('Division par zéro.');
+      result = left / right;
+      break;
+    default:
+      throw new RangeError('Opération inconnue.');
+  }
+
+  if (!Number.isFinite(result)) throw new RangeError('Résultat hors limites.');
+  return result;
+}
+
+--- FIN DU FICHIER ---
+
+--- FICHIER cli.mjs ---
+import { calculate } from './calculator.mjs';
+
+const [operation, left, right] = process.argv.slice(2);
+
+try {
+  if (process.argv.length !== 5 || !left.trim() || !right.trim()) {
+    throw new Error('Usage : node cli.mjs <opération> <nombre> <nombre>');
+  }
+
+  console.log(calculate(operation, Number(left), Number(right)));
+} catch (error) {
+  console.error(error.message);
+  process.exitCode = 1;
+}
+
+--- FIN DU FICHIER ---
+
+--- FICHIER calculator.test.mjs ---
+import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+import { test } from 'node:test';
+import { fileURLToPath } from 'node:url';
+import { calculate } from './calculator.mjs';
+
+test('calcule les quatre opérations', () => {
+  assert.equal(calculate('add', 2, 3), 5);
+  assert.equal(calculate('sub', 2, 3), -1);
+  assert.equal(calculate('mul', -2, 3), -6);
+  assert.equal(calculate('div', 7, 2), 3.5);
+});
+
+test('signale une division par zéro', () => {
+  assert.throws(() => calculate('div', 1, 0), /Division par zéro/);
+});
+
+test('refuse une opération inconnue', () => {
+  assert.throws(() => calculate('inconnue', 1, 2), /Opération inconnue/);
+});
+
+test('refuse les opérandes et résultats non finis', () => {
+  assert.throws(() => calculate('add', NaN, 2), /nombres finis/);
+  assert.throws(() => calculate('mul', Number.MAX_VALUE, 2), /hors limites/);
+});
+
+const cli = fileURLToPath(new URL('./cli.mjs', import.meta.url));
+
+test('affiche le résultat en ligne de commande', () => {
+  const run = spawnSync(process.execPath, [cli, 'add', '2', '3'], { encoding: 'utf8' });
+  assert.equal(run.status, 0);
+  assert.equal(run.stdout.trim(), '5');
+});
+
+test('renvoie un code d’échec pour une saisie invalide', () => {
+  const run = spawnSync(process.execPath, [cli, 'add', ' ', '3'], { encoding: 'utf8' });
+  assert.equal(run.status, 1);
+  assert.match(run.stderr, /Usage/);
+});
+
+--- FIN DU FICHIER ---
+
+--- FICHIER README.md ---
+# PolitWire — Pilote de contribution par agent
+
+Une petite calculatrice pour vérifier qu’une personne peut faire contribuer **son propre agent IA** à un projet GitHub public.
+
+Le parcours : **un fork par participant → une branche par mission → une Pull Request vers le projet d’origine**. Aucun ajout comme collaborateur au dépôt d’origine n’est nécessaire.
+
+## Participer
+
+Première mission : [ticket #1 — Ajouter le calcul d’un pourcentage](https://github.com/MarcoBaroniGitHub/politwire-agent-pilot/issues/1).
+
+1. Cliquez sur **Fork** en haut du dépôt pour créer votre copie sur votre compte GitHub.
+2. Connectez votre agent de code à **votre fork**, avec les droits nécessaires uniquement sur celui-ci.
+3. Suivez le [guide du test cloud](PILOTE.md), qui contient le prompt et la préparation d’une exécution planifiée unique depuis votre compte Claude Code.
+4. L’agent réalise la [mission « Ajouter le calcul d’un pourcentage »](MISSION.md) sur une branche et propose une PR vers `MarcoBaroniGitHub/politwire-agent-pilot:main`.
+5. Le mainteneur examine la contribution et décide de la fusion.
+
+Le pilote est réussi quand la session démarre à l’heure prévue, produit une PR vers le dépôt d’origine et fournit le résultat des tests. Un fork ou une conversation seuls ne valident pas ce test.
+
+Votre compte doit avoir accès aux sessions et tâches cloud de Claude Code. L’exécution consomme ses limites d’usage. Aucun mot de passe ou jeton n’est à transmettre par email.
+
+## Essayer en local
+
+Node.js 22 ou supérieur suffit, sans installation de dépendances.
+
+```sh
+node cli.mjs add 12 3
+node cli.mjs sub 12 3
+node cli.mjs mul 12 3
+node cli.mjs div 12 3
+node --test
+```
+
+L’opération `pct` est volontairement laissée au contributeur.
+
+## Guides
+
+- [Lancer le test cloud et copier le prompt](PILOTE.md)
+- [Mission et critères de réussite](MISSION.md)
+- [Contribuer et synchroniser son fork](CONTRIBUTING.md)
+- [Consignes des agents](AGENTS.md)
+
+La CI vérifie les tests sur Node.js 22 et 24 à chaque PR et mise à jour de `main`. Selon les réglages GitHub, le mainteneur peut devoir approuver la première exécution d’un contributeur externe. La fusion reste une décision humaine.
+
+Ce dépôt contient uniquement la calculatrice du pilote technique.
+
+--- FIN DU FICHIER ---
