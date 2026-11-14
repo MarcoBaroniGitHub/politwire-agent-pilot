@@ -27,10 +27,11 @@ node cli.mjs add 12 3
 node cli.mjs sub 12 3
 node cli.mjs mul 12 3
 node cli.mjs div 12 3
+node cli.mjs pct 15 80
 node --test
 ```
 
-L’opération `pct` est volontairement laissée au contributeur.
+L’opération `pct` prend le taux puis la valeur : `node cli.mjs pct 15 80` affiche `12`. Les taux nuls et négatifs sont acceptés.
 
 ## Guides
 

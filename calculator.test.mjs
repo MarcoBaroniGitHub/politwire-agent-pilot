@@ -37,3 +37,28 @@ test('renvoie un code d’échec pour une saisie invalide', () => {
   assert.equal(run.status, 1);
   assert.match(run.stderr, /Usage/);
 });
+
+for (const [name, rate, value, expected] of [
+  ['calcule 15 pour cent de 80', 15, 80, 12],
+  ['accepte un taux nul', 0, 80, 0],
+  ['accepte un taux négatif', -15, 80, -12],
+  ['accepte un taux décimal', 12.5, 80, 10],
+  ['préserve le signe de la valeur', 15, -80, -12],
+]) {
+  test(name, () => {
+    assert.equal(calculate('pct', rate, value), expected);
+  });
+}
+
+test('signale un résultat de pourcentage hors limites', () => {
+  assert.throws(() => calculate('pct', 1000, Number.MAX_VALUE), /hors limites/);
+});
+
+for (const [rate, expected] of [['15', '12'], ['0', '0'], ['-15', '-12']]) {
+  test(`affiche le pourcentage en CLI pour le taux ${rate}`, () => {
+    const run = spawnSync(process.execPath, [cli, 'pct', rate, '80'], { encoding: 'utf8' });
+    assert.equal(run.status, 0, run.stderr);
+    assert.equal(run.stdout.trim(), expected);
+    assert.equal(run.stderr, '');
+  });
+}
