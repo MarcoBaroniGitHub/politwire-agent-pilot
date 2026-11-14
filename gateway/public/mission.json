@@ -1,0 +1,49 @@
+{
+  "mission_id": "calculator-pct-v1",
+  "base_commit": "8ae7ae8bef5708b621d058dc155c793aeb43bee6",
+  "project": "PolitWire",
+  "task": "Ajouter pct : taux puis valeur ; pct 15 80 donne 12. Gérer taux nul/négatif, valeurs finies, dépassement, tests unitaires/CLI, exemple README.",
+  "allowed_paths": [
+    "calculator.mjs",
+    "cli.mjs",
+    "calculator.test.mjs",
+    "README.md"
+  ],
+  "files": [
+    {
+      "path": "calculator.mjs",
+      "content": "export function calculate(operation, left, right) {\n  if (!Number.isFinite(left) || !Number.isFinite(right)) {\n    throw new TypeError('Les deux opérandes doivent être des nombres finis.');\n  }\n\n  let result;\n  switch (operation) {\n    case 'add':\n      result = left + right;\n      break;\n    case 'sub':\n      result = left - right;\n      break;\n    case 'mul':\n      result = left * right;\n      break;\n    case 'div':\n      if (right === 0) throw new RangeError('Division par zéro.');\n      result = left / right;\n      break;\n    default:\n      throw new RangeError('Opération inconnue.');\n  }\n\n  if (!Number.isFinite(result)) throw new RangeError('Résultat hors limites.');\n  return result;\n}\n"
+    },
+    {
+      "path": "cli.mjs",
+      "content": "import { calculate } from './calculator.mjs';\n\nconst [operation, left, right] = process.argv.slice(2);\n\ntry {\n  if (process.argv.length !== 5 || !left.trim() || !right.trim()) {\n    throw new Error('Usage : node cli.mjs <opération> <nombre> <nombre>');\n  }\n\n  console.log(calculate(operation, Number(left), Number(right)));\n} catch (error) {\n  console.error(error.message);\n  process.exitCode = 1;\n}\n"
+    },
+    {
+      "path": "calculator.test.mjs",
+      "content": "import assert from 'node:assert/strict';\nimport { spawnSync } from 'node:child_process';\nimport { test } from 'node:test';\nimport { fileURLToPath } from 'node:url';\nimport { calculate } from './calculator.mjs';\n\ntest('calcule les quatre opérations', () => {\n  assert.equal(calculate('add', 2, 3), 5);\n  assert.equal(calculate('sub', 2, 3), -1);\n  assert.equal(calculate('mul', -2, 3), -6);\n  assert.equal(calculate('div', 7, 2), 3.5);\n});\n\ntest('signale une division par zéro', () => {\n  assert.throws(() => calculate('div', 1, 0), /Division par zéro/);\n});\n\ntest('refuse une opération inconnue', () => {\n  assert.throws(() => calculate('inconnue', 1, 2), /Opération inconnue/);\n});\n\ntest('refuse les opérandes et résultats non finis', () => {\n  assert.throws(() => calculate('add', NaN, 2), /nombres finis/);\n  assert.throws(() => calculate('mul', Number.MAX_VALUE, 2), /hors limites/);\n});\n\nconst cli = fileURLToPath(new URL('./cli.mjs', import.meta.url));\n\ntest('affiche le résultat en ligne de commande', () => {\n  const run = spawnSync(process.execPath, [cli, 'add', '2', '3'], { encoding: 'utf8' });\n  assert.equal(run.status, 0);\n  assert.equal(run.stdout.trim(), '5');\n});\n\ntest('renvoie un code d’échec pour une saisie invalide', () => {\n  const run = spawnSync(process.execPath, [cli, 'add', ' ', '3'], { encoding: 'utf8' });\n  assert.equal(run.status, 1);\n  assert.match(run.stderr, /Usage/);\n});\n"
+    },
+    {
+      "path": "README.md",
+      "content": "# PolitWire — Pilote de contribution par agent\n\nUne petite calculatrice pour vérifier qu’une personne peut faire contribuer **son propre agent IA** à un projet GitHub public.\n\nLe parcours : **un fork par participant → une branche par mission → une Pull Request vers le projet d’origine**. Aucun ajout comme collaborateur au dépôt d’origine n’est nécessaire.\n\n## Participer\n\nPremière mission : [ticket #1 — Ajouter le calcul d’un pourcentage](https://github.com/MarcoBaroniGitHub/politwire-agent-pilot/issues/1).\n\n1. Cliquez sur **Fork** en haut du dépôt pour créer votre copie sur votre compte GitHub.\n2. Connectez votre agent de code à **votre fork**, avec les droits nécessaires uniquement sur celui-ci.\n3. Suivez le [guide du test cloud](PILOTE.md), qui contient le prompt et la préparation d’une exécution planifiée unique depuis votre compte Claude Code.\n4. L’agent réalise la [mission « Ajouter le calcul d’un pourcentage »](MISSION.md) sur une branche et propose une PR vers `MarcoBaroniGitHub/politwire-agent-pilot:main`.\n5. Le mainteneur examine la contribution et décide de la fusion.\n\nLe pilote est réussi quand la session démarre à l’heure prévue, produit une PR vers le dépôt d’origine et fournit le résultat des tests. Un fork ou une conversation seuls ne valident pas ce test.\n\nVotre compte doit avoir accès aux sessions et tâches cloud de Claude Code. L’exécution consomme ses limites d’usage. Aucun mot de passe ou jeton n’est à transmettre par email.\n\n## Essayer en local\n\nNode.js 22 ou supérieur suffit, sans installation de dépendances.\n\n```sh\nnode cli.mjs add 12 3\nnode cli.mjs sub 12 3\nnode cli.mjs mul 12 3\nnode cli.mjs div 12 3\nnode --test\n```\n\nL’opération `pct` est volontairement laissée au contributeur.\n\n## Guides\n\n- [Lancer le test cloud et copier le prompt](PILOTE.md)\n- [Mission et critères de réussite](MISSION.md)\n- [Contribuer et synchroniser son fork](CONTRIBUTING.md)\n- [Consignes des agents](AGENTS.md)\n\nLa CI vérifie les tests sur Node.js 22 et 24 à chaque PR et mise à jour de `main`. Selon les réglages GitHub, le mainteneur peut devoir approuver la première exécution d’un contributeur externe. La fusion reste une décision humaine.\n\nCe dépôt contient uniquement la calculatrice du pilote technique.\n"
+    }
+  ],
+  "submit_url": "https://politwire-contribute.vercel.app/api/contributions",
+  "fallback_url": "https://politwire-contribute.vercel.app/#return",
+  "max_body_bytes": 65536,
+  "max_file_bytes": 16384,
+  "receiver_note": "Vérifier /api/health receiver_ready avant tout envoi. Si false, conserver le résultat ; le pilote attend son activation.",
+  "result_shape": {
+    "mission_id": "calculator-pct-v1",
+    "base_commit": "8ae7ae8bef5708b621d058dc155c793aeb43bee6",
+    "files": [
+      {
+        "path": "calculator.mjs",
+        "content": "CONTENU COMPLET DU FICHIER MODIFIÉ"
+      }
+    ],
+    "tests": {
+      "status": "not_run",
+      "summary": "Résultat réel ou raison de non-exécution."
+    }
+  }
+}
